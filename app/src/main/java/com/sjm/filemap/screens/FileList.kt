@@ -48,6 +48,7 @@ fun FileList(vm: FileListViewModel = viewModel()) {
         }
     }) {
         val listState = rememberLazyListState()
+        val cs = rememberCoroutineScope()
         LazyColumn(contentPadding = it, state = listState) {
             items(vm.files) { f ->
                 SimpleFile(
@@ -55,7 +56,7 @@ fun FileList(vm: FileListViewModel = viewModel()) {
                     if (f.isDirectory) vm.getSizeOf(f) else f.length(),
                 ) {
                     vm.enterDirectory(f)
-                    rememberCoroutineScope().launch { listState.scrollToItem(0) }
+                    cs.launch { listState.scrollToItem(0) }
                 }
             }
         }
