@@ -18,8 +18,8 @@ class FileListViewModel : ViewModel() {
     private var totalSize: Long = 0
 
     init {
-        updateFiles()
         totalSize = calcAllFoldersSizes(curDirectory)
+        updateFiles()
     }
 
     fun enterDirectory(file: File) {
@@ -41,12 +41,16 @@ class FileListViewModel : ViewModel() {
     private fun updateFiles() {
         files.clear()
         files.addAll(curDirectory.listFiles()!!)
-        sortFilesByName()
+        sortFilesBySize()
     }
 
     private fun sortFilesByName() {
         //TODO: sort by size
         files.sortWith(compareBy<File> { it.isFile }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+    }
+
+    private fun sortFilesBySize() {
+        files.sortWith(compareByDescending<File> { getSizeOf(it) }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
     private fun calcAllFoldersSizes(file: File): Long {
@@ -61,11 +65,14 @@ class FileListViewModel : ViewModel() {
                 f.length()
             }
         }
-        sizeMap[file.absolutePath] = size
+        if (size > 0) sizeMap[file.absolutePath] = size
         return size
     }
 
-    fun getSizeOf(file: File) = sizeMap[file.absolutePath] ?: 0
+    fun getSizeOf(file: File): Long {
+        return if (file.isDirectory) sizeMap[file.absolutePath] ?: 0
+        else file.length()
+    }
 
     fun logMap() {
         Log.d("SizeMap", sizeMap.toString())
