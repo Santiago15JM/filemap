@@ -42,8 +42,19 @@ fun FileList(vm: FileListViewModel = viewModel()) {
             Button({ vm.exitDirectory { activity.finish() } }) {
                 Text("Back")
             }
-//            Button({ vm.logMap() }) {
-//                Text("Map")
+//            Button({
+//                vm.openFileInExtApp(
+//                    File("/storage/emulated/0/Download/pl.mp3"),
+//                    activity
+//                )
+//            }) {
+//                Text("Open")
+//            }
+//            Button({
+//                val f = File("/storage/emulated/0/Download/pl.mp3")
+//                Log.d("Type",f.getMimeType()?:"bug")
+//            }) {
+//                Text("getType")
 //            }
         }
     }) {
@@ -51,13 +62,10 @@ fun FileList(vm: FileListViewModel = viewModel()) {
         val cs = rememberCoroutineScope()
         LazyColumn(contentPadding = it, state = listState) {
             items(vm.files) { f ->
-                SimpleFile(
-                    f,
-                    if (f.isDirectory) vm.getSizeOf(f) else f.length(),
-                ) {
+                SimpleFile(f, if (f.isDirectory) vm.getSizeOf(f) else f.length(), {
                     vm.enterDirectory(f)
-                    cs.launch { listState.scrollToItem(0) }
-                }
+                    cs.launch { listState.scrollToItem(0) } //TODO: Scroll to last folder
+                }, { vm.openFileInExtApp(f, activity) })
             }
         }
     }
@@ -65,13 +73,11 @@ fun FileList(vm: FileListViewModel = viewModel()) {
 }
 
 @Composable
-fun SimpleFile(file: File, size: Long, onClick: () -> Unit) {
-    Surface(
-        shape = RoundedCornerShape(10.dp),
+fun SimpleFile(file: File, size: Long, onDirClick: () -> Unit, onFileClick: () -> Unit) {
+    Surface(shape = RoundedCornerShape(10.dp),
         elevation = 2.dp,
-        modifier = if (file.isDirectory) Modifier.padding(4.dp).fillMaxWidth().clickable { onClick() }
-        else Modifier.padding(4.dp).fillMaxWidth(),
-    ) {
+        modifier = if (file.isDirectory) Modifier.padding(4.dp).fillMaxWidth().clickable { onDirClick() }
+        else Modifier.padding(4.dp).fillMaxWidth().clickable { onFileClick() }) {
         Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(file.name)
             Spacer(Modifier.width(30.dp))
@@ -95,6 +101,7 @@ private fun getAppropriateSize(size: Long): String {
     }
     return "${String.format("%.2f", s)} $unit"
 }
+
 
 //@Composable
 //fun Bubble(size: Dp) {
