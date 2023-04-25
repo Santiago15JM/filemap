@@ -12,9 +12,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
+import com.sjm.filemap.R
 import java.io.File
 
-class FileListViewModel : ViewModel() {
+class FileExplorerViewModel : ViewModel() {
     var curDirectory: File by mutableStateOf(Environment.getExternalStorageDirectory()!!)
         private set
     val files = mutableStateListOf<File>()
@@ -50,9 +51,11 @@ class FileListViewModel : ViewModel() {
         sortFilesBySize()
     }
 
-    private fun sortFilesByName() {
-        files.sortWith(compareBy<File> { it.isFile }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
-    }
+    //TODO: Delete file
+
+//    private fun sortFilesByName() {
+//        files.sortWith(compareBy<File> { it.isFile }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
+//    }
 
     private fun sortFilesBySize() {
         files.sortWith(compareByDescending<File> { getSizeOf(it) }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
@@ -89,7 +92,7 @@ class FileListViewModel : ViewModel() {
         try {
             c.startActivity(intent)
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(c,"No hay instalada una app para abrir este archivo", Toast.LENGTH_SHORT).show()
+            Toast.makeText(c,c.getString(R.string.no_app_installed), Toast.LENGTH_SHORT).show()
         }
     }
 

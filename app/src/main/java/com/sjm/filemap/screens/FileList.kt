@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
-fun FileList(vm: FileListViewModel = viewModel()) {
+fun FileList(vm: FileExplorerViewModel = viewModel()) {
     val activity = LocalContext.current as Activity
     BackHandler { vm.exitDirectory { activity.finish() } }
     Scaffold(topBar = {
@@ -42,20 +42,7 @@ fun FileList(vm: FileListViewModel = viewModel()) {
             Button({ vm.exitDirectory { activity.finish() } }) {
                 Text("Back")
             }
-//            Button({
-//                vm.openFileInExtApp(
-//                    File("/storage/emulated/0/Download/pl.mp3"),
-//                    activity
-//                )
-//            }) {
-//                Text("Open")
-//            }
-//            Button({
-//                val f = File("/storage/emulated/0/Download/pl.mp3")
-//                Log.d("Type",f.getMimeType()?:"bug")
-//            }) {
-//                Text("getType")
-//            }
+
         }
     }) {
         val listState = rememberLazyListState()
@@ -69,7 +56,6 @@ fun FileList(vm: FileListViewModel = viewModel()) {
             }
         }
     }
-    //TODO Request permission
 }
 
 @Composable
@@ -80,11 +66,17 @@ fun SimpleFile(file: File, size: Long, onDirClick: () -> Unit, onFileClick: () -
         else Modifier.padding(4.dp).fillMaxWidth().clickable { onFileClick() }) {
         Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(file.name)
-            Spacer(Modifier.width(30.dp))
             Text(getAppropriateSize(size))
         }
     }
 }
+
+//@Composable
+//fun Bubble(size: Dp) {
+//    Surface(shape = CircleShape, modifier = Modifier.size(size)) {
+//
+//    }
+//}
 
 private fun getAppropriateSize(size: Long): String {
     var count = 0
@@ -101,11 +93,3 @@ private fun getAppropriateSize(size: Long): String {
     }
     return "${String.format("%.2f", s)} $unit"
 }
-
-
-//@Composable
-//fun Bubble(size: Dp) {
-//    Surface(shape = CircleShape, modifier = Modifier.size(size)) {
-//
-//    }
-//}
