@@ -49,10 +49,11 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
         val cs = rememberCoroutineScope()
         LazyColumn(contentPadding = it, state = listState) {
             items(vm.files) { f ->
-                SimpleFile(f, if (f.isDirectory) vm.getSizeOf(f) else f.length(), {
-                    vm.enterDirectory(f)
-                    cs.launch { listState.scrollToItem(0) } //TODO: Scroll to last folder
-                }, { vm.openFileInExtApp(f, activity) })
+                SimpleFile(file = f,
+                    size = if (f.isDirectory) vm.getSizeOf(f) else f.length(),
+                    onDirClick = { vm.enterDirectory(f); cs.launch { listState.scrollToItem(0) } },
+                    onFileClick = { vm.openFileInExtApp(f, activity) })
+                //TODO: Scroll to last folder
             }
         }
     }
@@ -62,8 +63,11 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
 fun SimpleFile(file: File, size: Long, onDirClick: () -> Unit, onFileClick: () -> Unit) {
     Surface(shape = RoundedCornerShape(10.dp),
         elevation = 2.dp,
-        modifier = if (file.isDirectory) Modifier.padding(4.dp).fillMaxWidth().clickable { onDirClick() }
-        else Modifier.padding(4.dp).fillMaxWidth().clickable { onFileClick() }) {
+        modifier = Modifier.padding(4.dp).fillMaxWidth().clickable(onClick = if (file.isDirectory) {
+            { onDirClick() }
+        } else {
+            { onFileClick() }
+        })) {
         Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(file.name)
             Text(getAppropriateSize(size))
