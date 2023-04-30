@@ -19,6 +19,7 @@ class FileExplorerViewModel : ViewModel() {
     var curDirectory: File by mutableStateOf(Environment.getExternalStorageDirectory()!!)
         private set
     val files = mutableStateListOf<File>()
+    val selection = mutableStateListOf<File>() // Selected Files
     private val fileStack: ArrayDeque<File> = ArrayDeque()
     private val sizeMap = mutableMapOf<String, Long>()
     private var totalSize: Long = 0
@@ -42,13 +43,23 @@ class FileExplorerViewModel : ViewModel() {
         curDirectory = fileStack.last()
         fileStack.removeLast()
         updateFiles()
+        selection.clear()
     }
 
     //TODO: access Android/data and obb Folders
     private fun updateFiles() {
         files.clear()
+        selection.clear()
         files.addAll(curDirectory.listFiles()!!)
         sortFilesBySize()
+    }
+
+    fun addSelectedFile(file: File) {
+        selection.add(file)
+    }
+
+    fun removeSelectedFile(file: File) {
+        selection.remove(file)
     }
 
     //TODO: Delete file
@@ -92,7 +103,7 @@ class FileExplorerViewModel : ViewModel() {
         try {
             c.startActivity(intent)
         } catch (e: ActivityNotFoundException) {
-            Toast.makeText(c,c.getString(R.string.no_app_installed), Toast.LENGTH_SHORT).show()
+            Toast.makeText(c, c.getString(R.string.no_app_installed), Toast.LENGTH_SHORT).show()
         }
     }
 
