@@ -2,6 +2,9 @@ package com.sjm.filemap.screens
 
 import android.app.Activity
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,13 +14,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.sjm.filemap.ui.theme.*
 import kotlinx.coroutines.launch
 import java.io.File
 
@@ -26,9 +31,9 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
     val activity = LocalContext.current as Activity
     BackHandler { vm.exitDirectory { activity.finish() } }
     Scaffold(topBar = {
-        TopAppBar {
+        TopAppBar(backgroundColor = Background, contentColor = White) {
             Row {
-                Column(Modifier.weight(3F)) {
+                Column(Modifier.weight(4F)) {
                     Text(
                         text = vm.curDirectory.path,
                         textAlign = TextAlign.Start,
@@ -77,10 +82,10 @@ fun SimpleFile(
 ) {
     var selected by rememberSaveable { mutableStateOf(false) }
     if (selectionIsEmpty()) selected = false
-    Surface(shape = RoundedCornerShape(10.dp),
-        color = if (selected) Color(0xFF00DDFF) else MaterialTheme.colors.background,
+    Surface(shape = RoundedCornerShape(30.dp),
+        color = if (selected) SelectionColor else MaterialTheme.colors.surface,
         elevation = 2.dp,
-        modifier = Modifier.padding(4.dp).fillMaxWidth().pointerInput(Unit) {
+        modifier = Modifier.padding(5.dp).fillMaxWidth().pointerInput(Unit) {
             detectTapGestures(onTap = {
                 if (selectionIsEmpty()) {
                     if (file.isDirectory) {
@@ -99,12 +104,13 @@ fun SimpleFile(
                 }
             }, onLongPress = {
                 if (!selected and selectionIsEmpty()) {
+                    //TODO: small vibration
                     selected = true
                     onSelect()
                 }
             })
         }) {
-        Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+        Row(Modifier.padding(20.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(file.name)
             Text(getAppropriateSize(size))
         }
