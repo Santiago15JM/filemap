@@ -34,7 +34,8 @@ fun FileMapTheme(darkTheme: Boolean = isSystemInDarkTheme(), content: @Composabl
 //    } else {
         LightColorPalette
 //    }
-
+    val sysUi = rememberSystemUiController()
+    sysUi.setSystemBarsColor(Background)
     MaterialTheme(
         colors = colors,
         typography = Typography,
