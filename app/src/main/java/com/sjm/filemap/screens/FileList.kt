@@ -40,27 +40,26 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
             }
         }
     }, bottomBar = {
-        BottomAppBar {
-            Button({ vm.exitDirectory { activity.finish() } }) {
-                Text("Back")
-            }
-
-        }
+        ActionToolbar(onBack = { vm.exitDirectory { activity.finish() } })
     }) {
         val listState = rememberLazyListState()
         val cs = rememberCoroutineScope()
-        LazyColumn(contentPadding = it, state = listState) {
-            items(items = vm.files, key = { f -> f.path }) { f ->
-                SimpleFile(
-                    file = f,
-                    size = if (f.isDirectory) vm.getSizeOf(f) else f.length(),
-                    onDirClick = { vm.enterDirectory(f); cs.launch { listState.scrollToItem(0) } },
-                    onFileClick = { vm.openFileInExtApp(f, activity) },
-                    selectionIsEmpty = { vm.selection.isEmpty() },
-                    onSelect = { vm.addSelectedFile(f) },
-                    onDeselect = { vm.removeSelectedFile(f) }
-                )
-                //TODO: Scroll to last folder
+
+        Box(Modifier.padding(it).fillMaxSize()) {
+            ActionPanel(vm.selection.isNotEmpty())
+
+            LazyColumn(state = listState, modifier = Modifier.matchParentSize()) {
+                item { Spacer(modifier = Modifier.padding(120.dp)) }
+                items(items = vm.files, key = { f -> f.path }) { f ->
+                    SimpleFile(file = f,
+                        size = if (f.isDirectory) vm.getSizeOf(f) else f.length(),
+                        onDirClick = { vm.enterDirectory(f); cs.launch { listState.scrollToItem(0) } },
+                        onFileClick = { vm.openFileInExtApp(f, activity) },
+                        selectionIsEmpty = { vm.selection.isEmpty() },
+                        onSelect = { vm.addSelectedFile(f) },
+                        onDeselect = { vm.removeSelectedFile(f) })
+                    //TODO: Scroll to last folder
+                }
             }
         }
     }
@@ -111,6 +110,72 @@ fun SimpleFile(
         }
     }
 }
+
+@Composable
+fun ActionToolbar(onBack: () -> Unit) {
+    Surface(
+        color = ActionToolbarBg,
+        modifier = Modifier.fillMaxWidth().padding(5.dp, 10.dp), /*5.dp, 0.dp, 5.dp, 10.dp*/
+        shape = RoundedCornerShape(30.dp),
+    ) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            modifier = Modifier.padding(0.dp, 10.dp),
+        ) {
+            ToolbarButton({ onBack() }) {
+                Text("Atrás")
+            }
+            ToolbarButton({}) {
+                Text("Pegar")
+            }
+            ToolbarButton({}) {
+                Text("Cortar")
+            }
+            ToolbarButton({}) {
+                Text("Copiar")
+            }
+        }
+    }
+}
+
+//TODO: Path InfoBar
+@Composable
+fun ActionPanel(visible: Boolean) {
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(),
+        exit = fadeOut(),
+        modifier = Modifier.zIndex(1F)
+    ) {
+        Surface(
+            color = ActionPanelBg,
+            shape = RoundedCornerShape(30.dp),
+            elevation = 5.dp,
+            modifier = Modifier.padding(5.dp),
+        ) {
+            Column(
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.fillMaxWidth().padding(20.dp),
+            ) {
+                Text("Actions Panel", color = White)
+                Text("Actions Panel", color = White)
+                Text("Actions Panel", color = White)
+                Text("Actions Panel", color = White)
+            }
+        }
+    }
+}
+
+@Composable
+fun ToolbarButton(
+    onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit,
+) = Button(
+    onClick,
+    shape = RoundedCornerShape(20.dp),
+    content = content,
+    colors = ButtonDefaults.buttonColors(backgroundColor = ToolbarButtonColor, contentColor = White),
+)
 
 //@Composable
 //fun Bubble(size: Dp) {
