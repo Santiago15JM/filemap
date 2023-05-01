@@ -19,10 +19,10 @@ class FileExplorerViewModel : ViewModel() {
     var curDirectory: File by mutableStateOf(Environment.getExternalStorageDirectory()!!)
         private set
     val files = mutableStateListOf<File>()
-    val selection = mutableStateListOf<File>() // Selected Files
     private val fileStack: ArrayDeque<File> = ArrayDeque()
-    private val sizeMap = mutableMapOf<String, Long>()
+    val sizeMap = mutableMapOf<String, Long>()
     private var totalSize: Long = 0
+    val selection = mutableStateListOf<File>()
 
     init {
         totalSize = calcAllFoldersSizes(curDirectory)
