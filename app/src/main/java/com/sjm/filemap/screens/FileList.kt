@@ -12,14 +12,19 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sjm.filemap.ui.theme.*
@@ -51,7 +56,7 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
         val cs = rememberCoroutineScope()
 
         Box(Modifier.padding(it).fillMaxSize()) {
-            ActionPanel(vm.selection.isNotEmpty())
+            ActionPanel(vm.selection, vm.sizeMap)
 
             LazyColumn(state = listState, modifier = Modifier.matchParentSize()) {
                 item { Spacer(modifier = Modifier.padding(120.dp)) }
@@ -146,36 +151,70 @@ fun ActionToolbar(onBack: () -> Unit) {
 
 //TODO: Path InfoBar
 @Composable
-fun ActionPanel(visible: Boolean) {
+fun ActionPanel(selection: MutableList<File>, sizeMap: MutableMap<String, Long>) {
+    val vm = ActionPanelViewModel(selection)
     AnimatedVisibility(
-        visible = visible,
+        visible = selection.isNotEmpty(),
         enter = fadeIn(),
         exit = fadeOut(),
-        modifier = Modifier.zIndex(1F)
+        modifier = Modifier.zIndex(1F),
     ) {
-        Surface(
+        if (selection.isNotEmpty()) Surface(
             color = ActionPanelBg,
             shape = RoundedCornerShape(30.dp),
             elevation = 5.dp,
             modifier = Modifier.padding(5.dp),
         ) {
-            Column(
-                horizontalAlignment = Alignment.Start,
-                verticalArrangement = Arrangement.Center,
-                modifier = Modifier.fillMaxWidth().padding(20.dp),
-            ) {
-                Text("Actions Panel", color = White)
-                Text("Actions Panel", color = White)
-                Text("Actions Panel", color = White)
-                Text("Actions Panel", color = White)
+            Column {
+                SelectionInfo(selection, vm.getSelectionSize(sizeMap))
+                //TODO: Optimize viewModels
+                Row(modifier = Modifier.fillMaxWidth().padding(15.dp), horizontalArrangement = Arrangement.End) {
+                    ActionPanelButton(Icons.Outlined.Delete, "Delete", {})
+                    ActionPanelButton(Icons.Outlined.Edit, "Rename", {})
+                }
             }
         }
     }
 }
 
 @Composable
+fun ActionPanelButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+    Surface(shape = RoundedCornerShape(12.dp), modifier = Modifier.padding(5.dp)) {
+        IconButton({ onClick() }, Modifier.size(40.dp)) { Icon(icon, description, Modifier.size(30.dp)) }
+    }
+}
+
+@Composable
+fun SelectionInfo(selection: MutableList<File>, selectionSize: Long) {
+    Column(
+        horizontalAlignment = Alignment.Start,
+        verticalArrangement = Arrangement.Top,
+        modifier = Modifier.fillMaxWidth().padding(20.dp).height(90.dp),
+    ) {
+        if (selection.size > 1) {
+            Text(
+                text = "Varios archivos",
+                color = White,
+                fontSize = 26.sp,
+            )
+            Text("Tamaño: ${getAppropriateSize(selectionSize)}", color = White)
+        } else {
+            val file = selection.first()
+            Text(
+                text = file.name,
+                color = White,
+                fontSize = 26.sp,
+            )
+            Text("Tamaño: ${getAppropriateSize(selectionSize)}", color = White)
+            if (file.isDirectory) Text("Numero de archivos: ${file.listFiles()?.size ?: 0}", color = White)
+            else Text("Tipo: ${file.getMimeType()}", color = White)
+        }
+    }
+}
+
+@Composable
 fun ToolbarButton(
-    onClick: () -> Unit, modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit,
+    onClick: () -> Unit, content: @Composable RowScope.() -> Unit,
 ) = Button(
     onClick,
     shape = RoundedCornerShape(20.dp),
