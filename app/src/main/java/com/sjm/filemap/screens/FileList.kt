@@ -5,6 +5,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -77,6 +79,7 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SimpleFile(
     file: File,
@@ -120,9 +123,10 @@ fun SimpleFile(
                 }
             })
         }) {
-        Row(Modifier.padding(20.dp), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(file.name)
-            Text(getAppropriateSize(size))
+        Row(Modifier.padding(20.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(text = file.name, maxLines = 1, modifier = Modifier.weight(1F).basicMarquee())
+            Spacer(Modifier.width(5.dp))
+            Text(getAppropriateSize(size), fontSize = 14.sp, maxLines = 1, textAlign = TextAlign.End)
         }
     }
 }
@@ -231,8 +235,8 @@ fun ToolbarButton(
 //fun Bubble(size: Dp) {
 //    Surface(shape = CircleShape, modifier = Modifier.size(size)) {
 //
-//    }
 //}
+//    }
 
 private fun getAppropriateSize(size: Long): String {
     var count = 0
