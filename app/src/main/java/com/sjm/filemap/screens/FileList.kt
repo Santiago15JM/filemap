@@ -20,8 +20,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -87,6 +89,9 @@ fun SimpleFile(
 ) {
     var selected by rememberSaveable { mutableStateOf(false) }
     if (selectionIsEmpty()) selected = false
+
+    val haptic = LocalHapticFeedback.current
+
     Surface(shape = RoundedCornerShape(30.dp),
         color = if (selected) SelectionColor else MaterialTheme.colors.surface,
         elevation = 2.dp,
@@ -109,9 +114,9 @@ fun SimpleFile(
                 }
             }, onLongPress = {
                 if (!selected and selectionIsEmpty()) {
-                    //TODO: small vibration
                     selected = true
                     onSelect()
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                 }
             })
         }) {
