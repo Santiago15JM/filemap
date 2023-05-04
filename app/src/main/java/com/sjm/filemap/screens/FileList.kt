@@ -202,7 +202,7 @@ fun SelectionInfo(selection: MutableList<File>, selectionSize: Long) {
     ) {
         if (selection.size > 1) {
             Text(
-                text = "Varios archivos",
+                text = "${selection.size} archivos",
                 color = White,
                 fontSize = 26.sp,
             )
