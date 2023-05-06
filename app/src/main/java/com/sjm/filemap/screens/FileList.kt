@@ -10,6 +10,7 @@ import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -32,13 +33,16 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sjm.filemap.ui.theme.*
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
 fun FileList(vm: FileExplorerViewModel = viewModel()) {
     val activity = LocalContext.current as Activity
-    BackHandler { vm.exitDirectory { activity.finish() } }
+    val listState = rememberLazyListState()
+    val cs = rememberCoroutineScope()
+
     Scaffold(topBar = {
         TopAppBar(backgroundColor = Background, contentColor = White) {
             Row {
@@ -54,10 +58,13 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
             }
         }
     }, bottomBar = {
-        ActionToolbar(onBack = { vm.exitDirectory { activity.finish() } })
+        ActionToolbar(onBack = {
+            onBack(vm, { activity.finish() }, cs, listState)
+        })
     }) {
-        val listState = rememberLazyListState()
-        val cs = rememberCoroutineScope()
+        BackHandler {
+            onBack(vm, { activity.finish() }, cs, listState)
+        }
 
         Box(Modifier.padding(it).fillMaxSize()) {
             ActionPanel(vm.selection, vm.sizeMap)
@@ -72,11 +79,17 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
                         selectionIsEmpty = { vm.selection.isEmpty() },
                         onSelect = { vm.addSelectedFile(f) },
                         onDeselect = { vm.removeSelectedFile(f) })
-                    //TODO: Scroll to last folder
                 }
             }
         }
     }
+}
+
+//TODO: Maybe improve
+private fun onBack(vm: FileExplorerViewModel, onBackInRoot: () -> Unit, cs: CoroutineScope, ls: LazyListState) {
+    val index = vm.lastFolderIndex
+    vm.exitDirectory { onBackInRoot() }
+    cs.launch { ls.scrollToItem(index) }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -123,7 +136,11 @@ fun SimpleFile(
                 }
             })
         }) {
-        Row(Modifier.padding(20.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+        Row(
+            Modifier.padding(20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Text(text = file.name, maxLines = 1, modifier = Modifier.weight(1F).basicMarquee())
             Spacer(Modifier.width(5.dp))
             Text(getAppropriateSize(size), fontSize = 14.sp, maxLines = 1, textAlign = TextAlign.End)

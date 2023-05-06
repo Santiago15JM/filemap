@@ -23,6 +23,7 @@ class FileExplorerViewModel : ViewModel() {
     val sizeMap = mutableMapOf<String, Long>()
     private var totalSize: Long = 0
     val selection = mutableStateListOf<File>()
+    var lastFolderIndex = 0
 
     init {
         totalSize = calcAllFoldersSizes(curDirectory)
@@ -40,10 +41,12 @@ class FileExplorerViewModel : ViewModel() {
             onBackInRootDir()
             return
         }
+        val lastFolder = curDirectory
         curDirectory = fileStack.last()
         fileStack.removeLast()
         updateFiles()
         selection.clear()
+        lastFolderIndex = files.indexOf(lastFolder)
     }
 
     //TODO: access Android/data and obb Folders
@@ -63,10 +66,6 @@ class FileExplorerViewModel : ViewModel() {
     }
 
     //TODO: Delete file
-
-//    private fun sortFilesByName() {
-//        files.sortWith(compareBy<File> { it.isFile }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
-//    }
 
     private fun sortFilesBySize() {
         files.sortWith(compareByDescending<File> { getSizeOf(it) }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
