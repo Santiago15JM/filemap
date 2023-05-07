@@ -33,12 +33,13 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sjm.filemap.ui.theme.*
+import com.sjm.filemap.utils.getMimeType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.io.File
 
 @Composable
-fun FileList(vm: FileExplorerViewModel = viewModel()) {
+fun FileList(vm: FileExplorerViewModel = viewModel(), selection: SelectionViewModel = viewModel()) {
     val activity = LocalContext.current as Activity
     val listState = rememberLazyListState()
     val cs = rememberCoroutineScope()
@@ -59,26 +60,27 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
         }
     }, bottomBar = {
         ActionToolbar(onBack = {
-            onBack(vm, { activity.finish() }, cs, listState)
+            exitDir(vm, selection, { activity.finish() }, cs, listState)
         })
     }) {
         BackHandler {
-            onBack(vm, { activity.finish() }, cs, listState)
+            exitDir(vm, selection, { activity.finish() }, cs, listState)
         }
 
         Box(Modifier.padding(it).fillMaxSize()) {
-            ActionPanel(vm.selection, vm.sizeMap)
+            InfoPanel(vm.sizeMap)
 
             LazyColumn(state = listState, modifier = Modifier.matchParentSize()) {
                 item { Spacer(modifier = Modifier.padding(120.dp)) }
                 items(items = vm.files, key = { f -> f.path }) { f ->
                     SimpleFile(file = f,
                         size = if (f.isDirectory) vm.getSizeOf(f) else f.length(),
-                        onDirClick = { vm.enterDirectory(f); cs.launch { listState.scrollToItem(0) } },
+//                        onDirClick = { vm.enterDirectory(f); cs.launch { listState.scrollToItem(0) /*TODO selection.clear*/ } },
+                        onDirClick = { enterDir(vm, selection, f, cs, listState) },
                         onFileClick = { vm.openFileInExtApp(f, activity) },
-                        selectionIsEmpty = { vm.selection.isEmpty() },
-                        onSelect = { vm.addSelectedFile(f) },
-                        onDeselect = { vm.removeSelectedFile(f) })
+                        selectionActive = { selection.isActive() },
+                        onSelect = { selection.addSelectedFile(f) },
+                        onDeselect = { selection.removeSelectedFile(f) })
                 }
             }
         }
@@ -86,9 +88,24 @@ fun FileList(vm: FileExplorerViewModel = viewModel()) {
 }
 
 //TODO: Maybe improve
-private fun onBack(vm: FileExplorerViewModel, onBackInRoot: () -> Unit, cs: CoroutineScope, ls: LazyListState) {
+private fun enterDir(
+    vm: FileExplorerViewModel, selection: SelectionViewModel, f: File, cs: CoroutineScope, ls: LazyListState
+) {
+    vm.enterDirectory(f)
+    selection.clear()
+    cs.launch { ls.scrollToItem(0) }
+}
+
+private fun exitDir(
+    vm: FileExplorerViewModel,
+    selection: SelectionViewModel,
+    onBackInRoot: () -> Unit,
+    cs: CoroutineScope,
+    ls: LazyListState
+) {
     val index = vm.lastFolderIndex
     vm.exitDirectory { onBackInRoot() }
+    selection.clear()
     cs.launch { ls.scrollToItem(index) }
 }
 
@@ -99,21 +116,19 @@ fun SimpleFile(
     size: Long,
     onDirClick: () -> Unit,
     onFileClick: () -> Unit,
-    selectionIsEmpty: () -> Boolean,
+    selectionActive: () -> Boolean,
     onSelect: () -> Unit,
     onDeselect: () -> Unit,
 ) {
     var selected by rememberSaveable { mutableStateOf(false) }
-    if (selectionIsEmpty()) selected = false
-
+    if (!selectionActive()) selected = false
     val haptic = LocalHapticFeedback.current
-
     Surface(shape = RoundedCornerShape(30.dp),
         color = if (selected) SelectionColor else MaterialTheme.colors.surface,
         elevation = 2.dp,
         modifier = Modifier.padding(5.dp).fillMaxWidth().pointerInput(Unit) {
             detectTapGestures(onTap = {
-                if (selectionIsEmpty()) {
+                if (!selectionActive()) {
                     if (file.isDirectory) {
                         onDirClick()
                     } else {
@@ -122,14 +137,14 @@ fun SimpleFile(
                 } else {
                     if (selected) {
                         selected = false
-                        onDeselect() //OnDeselect
+                        onDeselect()
                     } else {
                         selected = true
-                        onSelect() //OnSelect
+                        onSelect()
                     }
                 }
             }, onLongPress = {
-                if (!selected and selectionIsEmpty()) {
+                if (!selected and !selectionActive()) {
                     selected = true
                     onSelect()
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -152,7 +167,7 @@ fun SimpleFile(
 fun ActionToolbar(onBack: () -> Unit) {
     Surface(
         color = ActionToolbarBg,
-        modifier = Modifier.fillMaxWidth().padding(5.dp, 10.dp), /*5.dp, 0.dp, 5.dp, 10.dp*/
+        modifier = Modifier.fillMaxWidth().padding(5.dp, 10.dp),
         shape = RoundedCornerShape(30.dp),
     ) {
         Row(
@@ -177,22 +192,22 @@ fun ActionToolbar(onBack: () -> Unit) {
 
 //TODO: Path InfoBar
 @Composable
-fun ActionPanel(selection: MutableList<File>, sizeMap: MutableMap<String, Long>) {
-    val vm = ActionPanelViewModel(selection)
+fun InfoPanel(sizeMap: MutableMap<String, Long>, selVM: SelectionViewModel = viewModel()) {
+//    val vm = SelectionViewModel(selection)
     AnimatedVisibility(
-        visible = selection.isNotEmpty(),
+        visible = selVM.isActive(),
         enter = fadeIn(),
         exit = fadeOut(),
         modifier = Modifier.zIndex(1F),
     ) {
-        if (selection.isNotEmpty()) Surface(
+        if (selVM.isActive()) Surface(
             color = ActionPanelBg,
             shape = RoundedCornerShape(30.dp),
             elevation = 5.dp,
             modifier = Modifier.padding(5.dp),
         ) {
             Column {
-                SelectionInfo(selection, vm.getSelectionSize(sizeMap))
+                SelectionInfo(selVM.getSelectionSize(sizeMap))
                 //TODO: Optimize viewModels
                 Row(modifier = Modifier.fillMaxWidth().padding(15.dp), horizontalArrangement = Arrangement.End) {
                     ActionPanelButton(Icons.Outlined.Delete, "Delete", {})
@@ -204,28 +219,21 @@ fun ActionPanel(selection: MutableList<File>, sizeMap: MutableMap<String, Long>)
 }
 
 @Composable
-fun ActionPanelButton(icon: ImageVector, description: String, onClick: () -> Unit) {
-    Surface(shape = RoundedCornerShape(12.dp), modifier = Modifier.padding(5.dp)) {
-        IconButton({ onClick() }, Modifier.size(40.dp)) { Icon(icon, description, Modifier.size(30.dp)) }
-    }
-}
-
-@Composable
-fun SelectionInfo(selection: MutableList<File>, selectionSize: Long) {
+fun SelectionInfo(selectionSize: Long, selection: SelectionViewModel = viewModel()) {
     Column(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top,
         modifier = Modifier.fillMaxWidth().padding(20.dp).height(90.dp),
     ) {
-        if (selection.size > 1) {
+        if (selection.size() > 1) {
             Text(
-                text = "${selection.size} archivos",
+                text = "${selection.size()} archivos",
                 color = White,
                 fontSize = 26.sp,
             )
             Text("Tamaño: ${getAppropriateSize(selectionSize)}", color = White)
         } else {
-            val file = selection.first()
+            val file = selection.getFirst()
             Text(
                 text = file.name,
                 color = White,
@@ -235,6 +243,13 @@ fun SelectionInfo(selection: MutableList<File>, selectionSize: Long) {
             if (file.isDirectory) Text("Numero de archivos: ${file.listFiles()?.size ?: 0}", color = White)
             else Text("Tipo: ${file.getMimeType()}", color = White)
         }
+    }
+}
+
+@Composable
+fun ActionPanelButton(icon: ImageVector, description: String, onClick: () -> Unit) {
+    Surface(shape = RoundedCornerShape(12.dp), modifier = Modifier.padding(5.dp)) {
+        IconButton({ onClick() }, Modifier.size(40.dp)) { Icon(icon, description, Modifier.size(30.dp)) }
     }
 }
 
