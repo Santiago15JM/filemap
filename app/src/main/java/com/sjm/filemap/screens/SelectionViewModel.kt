@@ -2,15 +2,16 @@ package com.sjm.filemap.screens
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
+import com.sjm.filemap.utils.StorageM
 import java.io.File
 
 class SelectionViewModel : ViewModel() {
     private val selection = mutableStateListOf<File>()
 
-    fun getSelectionSize(sizeMap: MutableMap<String, Long>): Long {
+    fun getSelectionSize(): Long {
         var size = 0L
         selection.forEach {
-            size += if (it.isFile) it.length() else sizeMap[it.absolutePath] ?: 0
+            size += if (it.isFile) it.length() else StorageM.sizeMap[it.absolutePath] ?: 0
         }
         return size
     }

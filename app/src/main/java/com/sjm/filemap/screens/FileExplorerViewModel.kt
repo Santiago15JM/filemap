@@ -3,7 +3,6 @@ package com.sjm.filemap.screens
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.os.Environment
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -12,20 +11,20 @@ import androidx.compose.runtime.setValue
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModel
 import com.sjm.filemap.R
+import com.sjm.filemap.utils.StorageM
 import com.sjm.filemap.utils.getMimeType
 import java.io.File
 
 class FileExplorerViewModel : ViewModel() {
-    var curDirectory: File by mutableStateOf(Environment.getExternalStorageDirectory()!!)
+    var curDirectory: File by mutableStateOf(StorageM.rootFile)
         private set
     val files = mutableStateListOf<File>()
     private val fileStack: ArrayDeque<File> = ArrayDeque()
-    val sizeMap = mutableMapOf<String, Long>()
     private var totalSize: Long = 0
     var lastFolderIndex = 0
 
     init {
-        totalSize = calcAllFoldersSizes(curDirectory)
+        totalSize = StorageM.calcAllFoldersSizes(curDirectory)
         updateFiles()
     }
 
@@ -57,28 +56,7 @@ class FileExplorerViewModel : ViewModel() {
     //TODO: Delete file
 
     private fun sortFilesBySize() {
-        files.sortWith(compareByDescending<File> { getSizeOf(it) }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
-    }
-
-    private fun calcAllFoldersSizes(file: File): Long {
-        val files = file.listFiles()
-        if (files.isNullOrEmpty()) return 0
-        var size: Long = 0
-
-        for (f in files) {
-            size += if (f.isDirectory) {
-                calcAllFoldersSizes(f)
-            } else {
-                f.length()
-            }
-        }
-        if (size > 0) sizeMap[file.absolutePath] = size
-        return size
-    }
-
-    fun getSizeOf(file: File): Long {
-        return if (file.isDirectory) sizeMap[file.absolutePath] ?: 0
-        else file.length()
+        files.sortWith(compareByDescending<File> { StorageM.getSizeOf(it) }.thenBy(String.CASE_INSENSITIVE_ORDER) { it.name })
     }
 
     fun openFileInExtApp(file: File, c: Context) {

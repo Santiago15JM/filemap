@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.sjm.filemap.ui.theme.*
+import com.sjm.filemap.utils.StorageM
 import com.sjm.filemap.utils.getMimeType
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -54,7 +55,7 @@ fun FileList(vm: FileExplorerViewModel = viewModel(), selection: SelectionViewMo
                     )
                 }
                 Column(Modifier.weight(1F)) {
-                    Text(text = getAppropriateSize(vm.getSizeOf(vm.curDirectory)))
+                    Text(text = getAppropriateSize(StorageM.getSizeOf(vm.curDirectory)))
                 }
             }
         }
@@ -68,14 +69,13 @@ fun FileList(vm: FileExplorerViewModel = viewModel(), selection: SelectionViewMo
         }
 
         Box(Modifier.padding(it).fillMaxSize()) {
-            InfoPanel(vm.sizeMap)
+            InfoPanel()
 
             LazyColumn(state = listState, modifier = Modifier.matchParentSize()) {
                 item { Spacer(modifier = Modifier.padding(120.dp)) }
                 items(items = vm.files, key = { f -> f.path }) { f ->
                     SimpleFile(file = f,
-                        size = if (f.isDirectory) vm.getSizeOf(f) else f.length(),
-//                        onDirClick = { vm.enterDirectory(f); cs.launch { listState.scrollToItem(0) /*TODO selection.clear*/ } },
+                        size = if (f.isDirectory) StorageM.getSizeOf(f) else f.length(),
                         onDirClick = { enterDir(vm, selection, f, cs, listState) },
                         onFileClick = { vm.openFileInExtApp(f, activity) },
                         selectionActive = { selection.isActive() },
@@ -192,8 +192,7 @@ fun ActionToolbar(onBack: () -> Unit) {
 
 //TODO: Path InfoBar
 @Composable
-fun InfoPanel(sizeMap: MutableMap<String, Long>, selVM: SelectionViewModel = viewModel()) {
-//    val vm = SelectionViewModel(selection)
+fun InfoPanel(selVM: SelectionViewModel = viewModel()) {
     AnimatedVisibility(
         visible = selVM.isActive(),
         enter = fadeIn(),
@@ -207,7 +206,7 @@ fun InfoPanel(sizeMap: MutableMap<String, Long>, selVM: SelectionViewModel = vie
             modifier = Modifier.padding(5.dp),
         ) {
             Column {
-                SelectionInfo(selVM.getSelectionSize(sizeMap))
+                SelectionInfo(selVM.getSelectionSize())
                 //TODO: Optimize viewModels
                 Row(modifier = Modifier.fillMaxWidth().padding(15.dp), horizontalArrangement = Arrangement.End) {
                     ActionPanelButton(Icons.Outlined.Delete, "Delete", {})
