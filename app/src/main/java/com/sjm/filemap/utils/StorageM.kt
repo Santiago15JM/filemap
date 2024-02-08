@@ -1,17 +1,24 @@
 package com.sjm.filemap.utils
 
 import android.os.Environment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import java.io.File
 
 object StorageM {
+    var doneCalc by mutableStateOf(false)
+        private set
     val rootFile: File = Environment.getExternalStorageDirectory()!!
     val sizeMap = mutableMapOf<String, Long>()
+    private var totalSize: Long = 0
 
-    init {
-        calcAllFoldersSizes(rootFile)
+    fun init() {
+        totalSize = calcAllFoldersSizes(rootFile)
+        doneCalc = true
     }
 
-    fun calcAllFoldersSizes(file: File): Long {
+    private fun calcAllFoldersSizes(file: File): Long {
         val files = file.listFiles()
         if (files.isNullOrEmpty()) return 0
         var size: Long = 0

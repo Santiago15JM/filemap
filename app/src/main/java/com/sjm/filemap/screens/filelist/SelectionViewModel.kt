@@ -1,4 +1,4 @@
-package com.sjm.filemap.screens
+package com.sjm.filemap.screens.filelist
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel

@@ -1,4 +1,4 @@
-package com.sjm.filemap.screens
+package com.sjm.filemap.screens.filelist
 
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -15,16 +15,14 @@ import com.sjm.filemap.utils.StorageM
 import com.sjm.filemap.utils.getMimeType
 import java.io.File
 
-class FileExplorerViewModel : ViewModel() {
+class FileListViewModel : ViewModel() {
     var curDirectory: File by mutableStateOf(StorageM.rootFile)
         private set
     val files = mutableStateListOf<File>()
     private val fileStack: ArrayDeque<File> = ArrayDeque()
-    private var totalSize: Long = 0
     var lastFolderIndex = 0
 
     init {
-        totalSize = StorageM.calcAllFoldersSizes(curDirectory)
         updateFiles()
     }
 
@@ -47,7 +45,8 @@ class FileExplorerViewModel : ViewModel() {
     }
 
     //TODO: access Android/data and obb Folders
-    private fun updateFiles() {
+
+    private fun updateFiles() { // TODO: Launch in coroutine
         files.clear()
         files.addAll(curDirectory.listFiles()!!)
         sortFilesBySize()
