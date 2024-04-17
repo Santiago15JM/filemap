@@ -20,7 +20,8 @@ class FileListViewModel : ViewModel() {
         private set
     val files = mutableStateListOf<File>()
     private val fileStack: ArrayDeque<File> = ArrayDeque()
-    var lastFolderIndex = 0
+    var previousFolderIndex = 0
+    var copiedFile: File? = null
 
     init {
         updateFiles()
@@ -41,12 +42,12 @@ class FileListViewModel : ViewModel() {
         curDirectory = fileStack.last()
         fileStack.removeLast()
         updateFiles()
-        lastFolderIndex = files.indexOf(lastFolder)
+        previousFolderIndex = files.indexOf(lastFolder)
     }
 
     //TODO: access Android/data and obb Folders
 
-    private fun updateFiles() { // TODO: Launch in coroutine
+    fun updateFiles() { // TODO: Launch in coroutine
         files.clear()
         files.addAll(curDirectory.listFiles()!!)
         sortFilesBySize()

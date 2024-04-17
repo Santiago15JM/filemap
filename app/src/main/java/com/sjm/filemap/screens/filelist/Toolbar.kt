@@ -19,7 +19,7 @@ import com.sjm.filemap.ui.theme.ToolbarButtonColor
 import com.sjm.filemap.ui.theme.White
 
 @Composable
-fun ActionToolbar(isFileSelected: Boolean, onBack: () -> Unit) {
+fun ActionToolbar(isFileSelected: Boolean, onNewFolder: () -> Unit, onBack: () -> Unit) {
     Surface(
         color = ActionToolbarBg,
         modifier = Modifier
@@ -46,7 +46,7 @@ fun ActionToolbar(isFileSelected: Boolean, onBack: () -> Unit) {
                 }
             } else {
                 Spacer(modifier = Modifier.weight(1F))
-                ToolbarButton({}) {
+                ToolbarButton({ onNewFolder() }) {
                     Text("Nuevo")
                 }
             }

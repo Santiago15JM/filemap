@@ -31,22 +31,21 @@ import com.sjm.filemap.ui.theme.White
 import com.sjm.filemap.utils.getMimeType
 
 @Composable
-fun InfoPanel(selVM: SelectionViewModel = viewModel()) {
+fun InfoPanel(vm: SelectionViewModel = viewModel(), listvm: FileListViewModel = viewModel()) {
     AnimatedVisibility(
-        visible = selVM.isActive(),
+        visible = vm.isActive(),
         enter = fadeIn(),
         exit = fadeOut(), //FIXME
         modifier = Modifier.zIndex(1F),
     ) {
-        if (selVM.isActive()) Surface(
+        if (vm.isActive()) Surface(
             color = ActionPanelBg,
             shape = RoundedCornerShape(30.dp),
             elevation = 5.dp,
             modifier = Modifier.padding(5.dp),
         ) {
             Column {
-                SelectionInfo(selVM.getSelectionSize())
-                //TODO: Optimize viewModels
+                SelectionInfo(vm.getSelectionSize())
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -54,15 +53,25 @@ fun InfoPanel(selVM: SelectionViewModel = viewModel()) {
                     horizontalArrangement = Arrangement.End
                 ) {
                     ActionPanelButton(Icons.Outlined.Delete, "Delete", {})
-                    ActionPanelButton(Icons.Outlined.Edit, "Rename", {})
+
+                    if (vm.size() == 1) ActionPanelButton(icon = Icons.Outlined.Edit,
+                        description = "Rename",
+                        onClick = { vm.showEditDialog = true })
                 }
             }
         }
     }
+
+    when {
+        vm.showEditDialog -> InputDialog(prompt = "Renombrar", onAccept = { name ->
+            vm.rename(name)
+            listvm.updateFiles()
+        }, onDismiss = { vm.showEditDialog = false }, defaultText = vm.getFirst().name)
+    }
 }
 
 @Composable
-fun SelectionInfo(selectionSize: Long, selection: SelectionViewModel = viewModel()) {
+fun SelectionInfo(selectionSize: Long, vm: SelectionViewModel = viewModel()) {
     Column(
         horizontalAlignment = Alignment.Start,
         verticalArrangement = Arrangement.Top,
@@ -71,15 +80,15 @@ fun SelectionInfo(selectionSize: Long, selection: SelectionViewModel = viewModel
             .padding(20.dp)
             .height(90.dp),
     ) {
-        if (selection.size() > 1) {
+        if (vm.size() > 1) {
             Text(
-                text = "${selection.size()} archivos",
+                text = "${vm.size()} archivos",
                 color = White,
                 fontSize = 26.sp,
             )
             Text("Tamaño: ${getAppropriateSize(selectionSize)}", color = White)
         } else {
-            val file = selection.getFirst()
+            val file = vm.getFirst()
             Text(
                 text = file.name,
                 color = White,

@@ -1,12 +1,17 @@
 package com.sjm.filemap.screens.filelist
 
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import com.sjm.filemap.utils.StorageM
 import java.io.File
 
 class SelectionViewModel : ViewModel() {
     private val selection = mutableStateListOf<File>()
+
+    var showEditDialog by mutableStateOf(false)
 
     fun getSelectionSize(): Long {
         var size = 0L
@@ -31,4 +36,12 @@ class SelectionViewModel : ViewModel() {
     fun size() = selection.size
 
     fun getFirst() = selection.first()
+
+    fun rename(name: String) {
+        if (selection.size != 1) return
+        val file = selection.first()
+        if (file.renameTo(File(file.parent, name))) {
+            clear()
+        }
+    }
 }
